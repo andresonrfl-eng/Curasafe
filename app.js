@@ -350,8 +350,9 @@ if(raw('curasafe_has_onboarded')==='true') $('welcomeScreen').classList.add('hid
 else {setBackgroundInert(true);$('welcomeScreen').querySelector('button')?.focus();}
 if('Notification' in window) $('notificationStatus').textContent=Notification.permission==='granted'?'Notificações permitidas':'Notificações não ativadas';
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
-  if(reg.waiting) $('updateApp').classList.remove('hidden');
-  reg.addEventListener('updatefound',()=>reg.installing?.addEventListener('statechange',()=>{if(reg.waiting) $('updateApp').classList.remove('hidden');}));
+  const showUpdate=()=>{if(reg.waiting&&navigator.serviceWorker.controller) $('updateApp').classList.remove('hidden');};
+  showUpdate();
+  reg.addEventListener('updatefound',()=>reg.installing?.addEventListener('statechange',showUpdate));
 }).catch(()=>showToast('Não foi possível preparar o uso offline. Confira a conexão.','error'));
 $('updateApp').addEventListener('click',async()=>{const reg=await navigator.serviceWorker.getRegistration();$('updateApp').dataset.requested='true';reg?.waiting?.postMessage({type:'SKIP_WAITING'});});
 let reloading=false;navigator.serviceWorker?.addEventListener('controllerchange',()=>{if(!reloading&&$('updateApp').dataset.requested==='true') {reloading=true;location.reload();}});
