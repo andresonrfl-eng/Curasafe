@@ -349,8 +349,9 @@ loadScope();renderAll();
 if(raw('curasafe_has_onboarded')==='true') $('welcomeScreen').classList.add('hidden');
 else {setBackgroundInert(true);$('welcomeScreen').querySelector('button')?.focus();}
 if('Notification' in window) $('notificationStatus').textContent=Notification.permission==='granted'?'Notificações permitidas':'Notificações não ativadas';
+const hadWorker=raw('curasafe_has_onboarded')==='true'&&'serviceWorker' in navigator&&!!navigator.serviceWorker.controller;
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
-  const showUpdate=()=>{if(reg.waiting&&navigator.serviceWorker.controller) $('updateApp').classList.remove('hidden');};
+  const showUpdate=()=>{if(reg.waiting&&hadWorker) $('updateApp').classList.remove('hidden');};
   showUpdate();
   reg.addEventListener('updatefound',()=>reg.installing?.addEventListener('statechange',showUpdate));
 }).catch(()=>showToast('Não foi possível preparar o uso offline. Confira a conexão.','error'));
