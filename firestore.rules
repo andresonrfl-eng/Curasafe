@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signed() { return request.auth != null; }
+    function owner(family) {
+      return signed() && get(/databases/$(database)/documents/families/$(family)).data.ownerUid == request.auth.uid;
+    }
+    function reader(family) {
+      return owner(family) || (signed() && exists(/databases/$(database)/documents/families/$(family)/members/$(request.auth.uid)));
+    }
+    match /families/{family} {
+      // Root contains only the owner UID, never health information.
+      allow get: if signed();
+      allow list, update, delete: if false;
+      allow create: if signed() && family.matches('CURA_[A-Z0-9]{6,32}')
+        && request.resource.data.keys().hasOnly(['ownerUid'])
+        && request.resource.data.ownerUid == request.auth.uid;
+      match /members/{uid} {
+        allow get: if signed() && (request.auth.uid == uid || owner(family));
+        allow list: if owner(family);
+        allow create, update: if owner(family)
+          && request.resource.data.keys().hasOnly(['role']) && request.resource.data.role == 'viewer';
+        allow delete: if owner(family);
+      }
+      match /meds/{id} {
+        allow read: if reader(family);
+        allow create, update: if owner(family)
+          && request.resource.data.id == id
+          && request.resource.data.name is string && request.resource.data.name.size() <= 120
+          && request.resource.data.stock is int && request.resource.data.stock >= 0;
+        allow delete: if owner(family);
+      }
+      match /logs/{id} {
+        allow read: if reader(family);
+        allow create, update: if owner(family)
+          && request.resource.data.id == id
+          && request.resource.data.action in ['taken','skipped','snoozed']
+          && request.resource.data.medId is string;
+        allow delete: if false;
+      }
+    }
+  }
+}

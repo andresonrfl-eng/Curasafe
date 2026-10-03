@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff">
+  <title>CuraSafe - Assistente de Saúde</title>
+  
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+
+  <style>
+    body { -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .glass-nav { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .progress-ring__circle { transition: stroke-dashoffset 0.5s ease-in-out; transform: rotate(-90deg); transform-origin: 50% 50%; }
+    .quadrant-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    @media (max-width: 640px) { .quadrant-grid { grid-template-columns: 1fr; } }
+      button { min-height:44px; }
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid #0d9488;outline-offset:3px; }
+    button:disabled { opacity:.5;cursor:not-allowed; }
+    button[aria-pressed="true"],nav button[aria-current="page"] { background:#ccfbf1;color:#0f766e; }
+    nav button[aria-current="false"] { background:transparent;color:#64748b;box-shadow:none; }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important;transition:none!important; } }
+    @media (max-width:640px) { #welcomeScreen { overflow-y:auto;justify-content:flex-start;padding-top:24px; } }
+  </style>
+</head>
+<body class="text-slate-800 antialiased font-sans min-h-screen flex flex-col pb-20 md:pb-0">
+
+  <!-- TELA DE BOAS-VINDAS / ONBOARDING -->
+  <div id="welcomeScreen" role="dialog" aria-modal="true" aria-label="Bem-vindo ao CuraSafe" class="fixed inset-0 z-[60] bg-slate-50 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 text-center animate-pop">
+      <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/30 mb-6">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+      </div>
+      <h1 class="text-2xl font-black text-slate-900 mb-2">CuraSafe</h1>
+      <p class="text-slate-500 text-sm mb-8">O seu assistente inteligente e compartilhado para controle de medicamentos.</p>
+
+      <div id="welcomeOptions" class="space-y-4">
+        <button onclick="startFresh()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition active:scale-95">
+          Começar minha rotina
+        </button>
+        <div class="relative flex items-center py-2">
+           <div class="flex-grow border-t border-slate-200"></div>
+           <span class="flex-shrink-0 mx-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">ou</span>
+           <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+        <button onclick="showJoinInput()" class="w-full bg-white border-2 border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-slate-700 font-bold py-3.5 px-4 rounded-xl transition active:scale-95">
+          Acompanhar uma família
+        </button>
+      </div>
+
+      <div id="welcomeJoin" class="hidden flex-col gap-3">
+         <p class="text-sm font-bold text-slate-700 text-left">Insira o código Medfriend:</p>
+         <input type="text" id="welcomeInputCode" aria-label="Código da família" placeholder="Ex: CURA_A1B2C3" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm text-center uppercase" />
+         <div class="flex gap-2 mt-2">
+           <button onclick="hideJoinInput()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition">Voltar</button>
+           <button onclick="joinFromWelcome()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition">Acessar</button>
+         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 glass-nav border-b border-slate-200 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white shadow-md shadow-brand-500/30">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-black text-slate-900 tracking-tight leading-none">CuraSafe</h1>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <div id="connectionStatus" class="w-2 h-2 rounded-full bg-amber-400"></div>
+            <span id="connectionText" class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Somente neste aparelho</span>
+          </div>
+        </div>
+      </div>
+      <button onclick="openSettings()" aria-label="Configurações" class="p-3 rounded-xl bg-slate-100 text-slate-700">⚙️</button>
+      <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200">
+        <button onclick="switchTab('today')" id="tab-btn-today" class="px-5 py-2 rounded-xl text-sm font-bold bg-white text-brand-700 shadow-sm transition">Hoje</button>
+        <button onclick="switchTab('meds')" id="tab-btn-meds" class="px-5 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-white/50 transition">Remédios</button>
+        <button onclick="switchTab('history')" id="tab-btn-history" class="px-5 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-white/50 transition">Histórico</button>
+        <button onclick="switchTab('medfriend')" id="tab-btn-medfriend" class="px-5 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-white/50 transition">Medfriend</button>
+      </nav>
+    </div>
+  </header>
+
+  <div aria-live="polite" role="status" id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <main class="max-w-5xl w-full mx-auto p-4 flex-1">
+    <p id="storageWarning" role="alert" class="hidden bg-red-100 text-red-800 rounded-2xl p-4 mb-4">O armazenamento deste navegador está indisponível ou tem dados inválidos. Não altere registros aqui até recuperar o acesso. Os dados anteriores foram preservados.</p>
+    <button id="updateApp" class="hidden bg-brand-100 text-brand-700 p-3 rounded-xl mb-4">Atualizar o aplicativo</button>
+    <!-- ================= TAB 1: HOJE (QUADRANTES) ================= -->
+    <section id="section-today" class="space-y-6 animate-pop">
+      <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-5 w-full md:w-auto">
+          <div class="relative flex items-center justify-center w-20 h-20 flex-shrink-0">
+            <svg class="w-full h-full transform -rotate-90">
+              <circle class="text-slate-100" stroke-width="6" stroke="currentColor" fill="transparent" r="34" cx="40" cy="40" />
+              <circle id="adherenceCircle" class="text-brand-500 transition-all duration-1000 ease-out" stroke-width="6" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="34" cx="40" cy="40" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-lg font-black text-slate-800" id="adherencePct">0%</span>
+            </div>
+          </div>
+          <div>
+            <h2 class="text-2xl font-black text-slate-900 leading-tight" id="headerDate">Hoje</h2>
+            <p class="text-slate-500 text-sm mt-0.5" id="adherenceText">Carregando cronograma...</p>
+          </div>
+        </div>
+        <button onclick="openAddMedModal()" class="w-full md:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-brand-500/20 transition-all active:scale-95">
+          Novo Medicamento
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2" aria-label="Selecionar dia">
+        <button data-day-offset="-1" aria-pressed="false" class="px-4 py-3 rounded-xl bg-white border font-bold text-sm">Ontem</button>
+        <button data-day-offset="0" aria-pressed="true" class="px-4 py-3 rounded-xl bg-white border font-bold text-sm">Hoje</button>
+        <button data-day-offset="1" aria-pressed="false" class="px-4 py-3 rounded-xl bg-white border font-bold text-sm">Amanhã</button>
+        <label for="selectedDate" class="sr-only">Data da caixa</label><input type="date" id="selectedDate" class="px-3 py-3 border rounded-xl bg-white min-w-0" />
+      </div>
+      <details class="bg-white border rounded-2xl p-4 text-sm text-slate-600">
+        <summary class="cursor-pointer font-bold">Som e notificações · app ativo</summary>
+        <div class="mt-3">
+        <div class="flex flex-wrap items-center justify-between gap-3"><p>Lembretes com o app ativo</p><button onclick="activateReminders()" class="bg-brand-50 text-brand-700 px-4 py-3 rounded-xl font-bold">Ativar som e notificações</button></div>
+        <p class="text-xs mt-2">O navegador pode suspender os lembretes com a tela bloqueada ou o app fechado. Não há garantia de alarme nessas situações.</p>
+        <p class="text-xs mt-2"><span id="audioStatus">Som não ativado nesta sessão</span> · <span id="notificationStatus">Notificações não ativadas</span></p>
+        </div>
+      </details>
+      <div id="stockAlertsContainer" class="hidden flex-col gap-2"></div>
+
+      <div>
+        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">Sua Caixa de Remédios</h3>
+        <div class="quadrant-grid">
+          <!-- Manhã -->
+          <div class="bg-gradient-to-b from-yellow-50 to-white rounded-3xl border border-yellow-200/60 overflow-hidden shadow-sm flex flex-col h-full">
+            <div class="bg-yellow-100/50 px-4 py-3 border-b border-yellow-200/50 flex justify-between">
+              <div class="flex items-center gap-2"><span class="text-xl">🌅</span><h4 class="font-bold text-yellow-900">Manhã</h4></div>
+              <span class="text-[10px] font-bold text-yellow-700 uppercase bg-yellow-200/50 px-2 py-0.5 rounded-md">06:00 - 11:59</span>
+            </div>
+            <div id="quad-morning" class="p-3 flex-1 flex flex-col gap-2 min-h-[120px]"></div>
+          </div>
+          <!-- Tarde -->
+          <div class="bg-gradient-to-b from-orange-50 to-white rounded-3xl border border-orange-200/60 overflow-hidden shadow-sm flex flex-col h-full">
+            <div class="bg-orange-100/50 px-4 py-3 border-b border-orange-200/50 flex justify-between">
+              <div class="flex items-center gap-2"><span class="text-xl">☀️</span><h4 class="font-bold text-orange-900">Tarde</h4></div>
+              <span class="text-[10px] font-bold text-orange-700 uppercase bg-orange-200/50 px-2 py-0.5 rounded-md">12:00 - 17:59</span>
+            </div>
+            <div id="quad-afternoon" class="p-3 flex-1 flex flex-col gap-2 min-h-[120px]"></div>
+          </div>
+          <!-- Noite -->
+          <div class="bg-gradient-to-b from-indigo-50 to-white rounded-3xl border border-indigo-200/60 overflow-hidden shadow-sm flex flex-col h-full">
+            <div class="bg-indigo-100/50 px-4 py-3 border-b border-indigo-200/50 flex justify-between">
+              <div class="flex items-center gap-2"><span class="text-xl">🌙</span><h4 class="font-bold text-indigo-900">Noite</h4></div>
+              <span class="text-[10px] font-bold text-indigo-700 uppercase bg-indigo-200/50 px-2 py-0.5 rounded-md">18:00 - 22:59</span>
+            </div>
+            <div id="quad-evening" class="p-3 flex-1 flex flex-col gap-2 min-h-[120px]"></div>
+          </div>
+          <!-- Ao Deitar -->
+          <div class="bg-gradient-to-b from-slate-100 to-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-sm flex flex-col h-full">
+            <div class="bg-slate-200/50 px-4 py-3 border-b border-slate-200/80 flex justify-between">
+              <div class="flex items-center gap-2"><span class="text-xl">🛏️</span><h4 class="font-bold text-slate-800">Ao Deitar</h4></div>
+              <span class="text-[10px] font-bold text-slate-600 uppercase bg-slate-300/50 px-2 py-0.5 rounded-md">23:00 - 05:59</span>
+            </div>
+            <div id="quad-bedtime" class="p-3 flex-1 flex flex-col gap-2 min-h-[120px]"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: REMÉDIOS ================= -->
+    <section id="section-meds" class="hidden space-y-6 animate-pop">
+      <div class="flex items-center justify-between">
+        <div><h2 class="text-xl font-bold text-slate-900">Medicamentos</h2></div>
+        <button onclick="openAddMedModal()" class="hidden md:flex bg-brand-100 text-brand-700 px-4 py-2 rounded-xl">+ Adicionar</button>
+      </div>
+      <div id="medsListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- ================= TAB 3: HISTÓRICO ================= -->
+    <section id="section-history" class="hidden space-y-6 animate-pop">
+      <div><h2 class="text-xl font-bold text-slate-900">Histórico</h2></div>
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div id="logsContainer" class="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto hide-scrollbar"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: MEDFRIEND (Corrigido) ================= -->
+    <section id="section-medfriend" class="hidden space-y-6 animate-pop">
+      <div class="bg-gradient-to-br from-brand-600 to-teal-800 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div class="relative z-10">
+          <h2 class="text-2xl font-black mb-2">Módulo Medfriend</h2>
+          <p class="text-brand-100 max-w-lg mb-6">Conecte-se com familiares para gerenciar tratamentos em conjunto.</p>
+          
+          <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+            <p class="text-xs font-bold uppercase tracking-wider text-brand-200 mb-1">Seu Código de Família (Para Compartilhar)</p>
+            <div class="flex items-center gap-3">
+              <!-- AQUI A MÁGICA ACONTECE: O Código é injetado via JS quase que instantaneamente -->
+              <code id="myFamilyCode" class="text-xl md:text-2xl font-mono font-black bg-black/30 px-4 py-2 rounded-lg break-all select-all">GERANDO...</code>
+              <button onclick="copyFamilyCode()" aria-label="Copiar código da família" class="p-3 bg-white/20 hover:bg-white/30 rounded-lg transition" title="Copiar">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+            <p class="text-[11px] text-brand-100 mt-2 opacity-80">O código identifica sua família. O acesso exige autorização do titular.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <p id="cloudNotice" class="text-sm text-slate-600 mb-4"></p>
+        <p class="text-xs font-bold text-slate-500">ID deste dispositivo para autorização:</p><code id="deviceId" class="block text-xs break-all select-all my-2">Disponível após conectar à nuvem</code>
+        <div id="authorizePanel" class="hidden border rounded-2xl p-3 my-4"><label for="caregiverUid" class="block text-sm font-bold mb-2">Autorizar cuidador (somente leitura)</label><input id="caregiverUid" class="w-full border rounded-xl p-3 text-sm" placeholder="ID do dispositivo do cuidador" /><div class="flex flex-wrap gap-2 mt-2"><button onclick="authorize()" class="p-3 rounded-xl bg-brand-50 text-brand-700 font-bold text-sm">Autorizar</button><button onclick="authorize(true)" class="p-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm">Revogar</button></div></div>
+        <h3 class="font-bold text-slate-800 mb-1">Acessar outra conta Medfriend</h3>
+        <p class="text-sm text-slate-500 mb-4">Insira o código de um familiar para acessar os remédios dele no seu app.</p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input type="text" id="inputJoinCode" aria-label="Código da família" placeholder="Ex: CURA_A1B2C3" class="flex-1 px-4 py-3 rounded-xl border border-slate-300 font-mono text-sm uppercase" />
+          <button onclick="joinFamily()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl transition">Conectar</button>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-500 uppercase">Status Atual:</span>
+          <span id="currentFamilyLabel" class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Gerenciando Própria Conta</span>
+        </div>
+        <button onclick="resetToOwnFamily()" id="btnResetFamily" class="hidden mt-3 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition">
+          Desconectar e Voltar para Meu Perfil
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 z-40 px-2 py-2 flex items-center justify-around">
+    <button onclick="switchTab('today')" id="mobile-tab-today" class="flex flex-col items-center gap-1 w-16 text-brand-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span class="text-[10px] font-bold">Hoje</span></button>
+    <button onclick="switchTab('meds')" id="mobile-tab-meds" class="flex flex-col items-center gap-1 w-16 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg><span class="text-[10px] font-bold">Remédios</span></button>
+    <div class="relative -top-6">
+      <button onclick="openAddMedModal()" aria-label="Novo medicamento" class="bg-brand-500 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg border-4 border-slate-50"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg></button>
+    </div>
+    <button onclick="switchTab('history')" id="mobile-tab-history" class="flex flex-col items-center gap-1 w-16 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg><span class="text-[10px] font-bold">Histórico</span></button>
+    <button onclick="switchTab('medfriend')" id="mobile-tab-medfriend" class="flex flex-col items-center gap-1 w-16 text-slate-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg><span class="text-[10px] font-bold">Família</span></button>
+  </nav>
+
+  <!-- Modal -->
+  <div id="medModal" role="dialog" aria-modal="true" aria-labelledby="medModalTitle" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center sm:p-4 opacity-0 transition-opacity">
+    <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col transform  max-h-[90vh]" id="medModalContent">
+      <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between">
+        <div><h3 id="medModalTitle" class="text-lg font-black text-slate-800">Novo Medicamento</h3></div>
+        <button onclick="closeModal()" aria-label="Fechar cadastro" class="p-2 text-slate-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <div class="overflow-y-auto p-6 space-y-5 hide-scrollbar flex-1">
+        <input type="hidden" id="formMedId" />
+        <div>
+          <label for="inputName" class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nome *</label>
+          <input type="text" id="inputName" maxlength="120" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-1 focus:ring-brand-500 font-bold" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="inputDosage" class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Dose *</label>
+            <input type="text" id="inputDosage" maxlength="120" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-1 focus:ring-brand-500 font-bold" />
+          </div>
+          <div>
+            <label for="inputShape" class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Tipo *</label>
+            <select id="inputShape" class="w-full px-4 py-3 rounded-xl border border-slate-300 font-bold">
+              <option value="pill">Comprimido</option><option value="capsule">Cápsula</option><option value="drops">Gotas</option><option value="syrup">Xarope</option><option value="injection">Injeção</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Cor</label>
+          <div class="flex gap-3">
+            <button onclick="selectColor('#ef4444', this)" data-color="#ef4444" aria-label="Cor #ef4444" class="color-btn w-8 h-8 rounded-full bg-red-500"></button>
+            <button onclick="selectColor('#3b82f6', this)" data-color="#3b82f6" aria-label="Cor #3b82f6" class="color-btn w-8 h-8 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-brand-400"></button>
+            <button onclick="selectColor('#10b981', this)" data-color="#10b981" aria-label="Cor #10b981" class="color-btn w-8 h-8 rounded-full bg-emerald-500"></button>
+            <button onclick="selectColor('#f59e0b', this)" data-color="#f59e0b" aria-label="Cor #f59e0b" class="color-btn w-8 h-8 rounded-full bg-amber-500"></button>
+            <input type="hidden" id="inputColor" value="#3b82f6" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="inputFrequency" class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Vezes ao dia</label>
+            <select id="inputFrequency" class="w-full px-4 py-3 rounded-xl border border-slate-300 font-bold">
+              <option value="1">1 vez (24/24h)</option><option value="2">2 vezes (12/12h)</option><option value="3">3 vezes (8/8h)</option><option value="4">4 vezes (6/6h)</option>
+            </select>
+          </div>
+          <div>
+            <label for="inputInitialTime" class="block text-[11px] font-bold text-slate-500 uppercase mb-1">1º Horário *</label>
+            <input type="time" id="inputInitialTime" value="08:00" class="w-full px-4 py-[11px] rounded-xl border border-slate-300 font-bold" />
+          </div>
+        </div>
+        <div><label for="inputStartDate" class="block text-xs font-bold text-slate-500 uppercase mb-1">Data da primeira dose</label><input type="date" id="inputStartDate" required class="w-full px-4 py-3 rounded-xl border border-slate-300" /><p class="text-xs text-slate-500 mt-2">Informe o início do intervalo que você já utiliza. O app apenas registra sua rotina.</p></div>
+        <div class="bg-brand-50 p-4 rounded-2xl">
+          <h4 class="text-xs font-bold text-brand-900 uppercase mb-2">Estoque</h4>
+          <p class="text-xs text-brand-700 mb-2">Informe o estoque em doses disponíveis. Cada dose tomada desconta 1; o app não calcula mL ou frações.</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label for="inputStock" class="text-[10px] font-bold text-brand-700 uppercase">Total</label><input type="number" id="inputStock" min="0" step="1" value="30" class="w-full px-3 py-2 rounded-lg border font-bold" /></div>
+            <div><label for="inputMinStock" class="text-[10px] font-bold text-brand-700 uppercase">Avisar em</label><input type="number" id="inputMinStock" min="0" step="1" value="5" class="w-full px-3 py-2 rounded-lg border font-bold" /></div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white p-4 border-t border-slate-200 flex justify-end gap-3">
+        <button onclick="closeModal()" class="px-5 py-3 text-sm font-bold text-slate-600">Cancelar</button>
+        <button onclick="saveMedication()" class="px-6 py-3 text-sm font-bold bg-brand-600 text-white rounded-xl">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+  <div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <h2 id="settingsTitle" class="text-xl font-black mb-2">Configuração da nuvem</h2><p class="text-sm text-slate-600 mb-4">Opcional: sem a nuvem, os registros ficam neste aparelho. Para compartilhar, use o mesmo projeto Firebase nos dispositivos.</p>
+      <label for="firebaseConfig" class="text-sm font-bold">Configuração Web do Firebase (JSON)</label><textarea id="firebaseConfig" rows="8" spellcheck="false" class="border rounded-xl p-3 w-full text-xs font-mono mt-2" placeholder='{"apiKey":"...","projectId":"...","appId":"...","authDomain":"...firebaseapp.com"}'></textarea>
+      <p class="text-xs text-slate-500 mt-2">Ative a autenticação anônima e publique as regras de acesso do projeto antes de conectar. Não cole chaves privadas ou contas de serviço.</p>
+      <div class="flex justify-end gap-2 mt-4"><button onclick="closeSettings()" class="p-3 text-slate-600 font-bold">Cancelar</button><button onclick="saveFirebaseConfig()" class="p-3 bg-brand-600 text-white font-bold rounded-xl">Salvar e conectar</button></div>
+    </div>
+  </div>
+</body>
+</html>
